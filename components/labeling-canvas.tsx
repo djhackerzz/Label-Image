@@ -2,7 +2,7 @@
 
 import { useRef, useCallback, useState } from 'react'
 import { cn } from '@/lib/utils'
-import type { Pin } from './anatomy-labeler'
+import type { LabelStyle, Pin } from './anatomy-labeler'
 
 interface LabelingCanvasProps {
   imageSrc: string
@@ -13,6 +13,7 @@ interface LabelingCanvasProps {
   onAddPin: (params: { x: number; y: number; badgeX: number; badgeY: number }) => void
   onMoveBadge: (id: string, x: number, y: number) => void
   onSelectPin: (id: string | null) => void
+  labelStyle: LabelStyle
   readOnly?: boolean
 }
 
@@ -24,12 +25,14 @@ function DraggableBadge({
   onSelect,
   selected,
   readOnly,
+  labelStyle,
 }: {
   pin: Pin
   getContainerRect: () => DOMRect | null
   onMove: (id: string, x: number, y: number) => void
   onSelect: () => void
   selected: boolean
+  labelStyle: LabelStyle
   readOnly?: boolean
 }) {
   const hasMoved = useRef(false)
@@ -78,11 +81,15 @@ function DraggableBadge({
         left: `${pin.badgeX}%`,
         top: `${pin.badgeY}%`,
         transform: 'translate(-50%, -50%)',
+        color: labelStyle.textColor,
+        fontSize: `${labelStyle.fontSize}px`,
+        fontWeight: labelStyle.bold ? 700 : 400,
+        fontStyle: labelStyle.italic ? 'italic' : 'normal',
       }}
       className={cn(
-        'absolute z-20 flex items-center justify-center w-7 h-7 rounded-full',
-        'text-[11px] font-bold select-none transition-all',
-        'bg-white text-gray-900',
+        'group absolute z-20 flex items-center justify-center w-7 h-7 rounded-full',
+        'select-none transition-all',
+        'bg-white',
         !readOnly && 'cursor-grab active:cursor-grabbing',
         isDragging && 'scale-110',
         selected
@@ -131,6 +138,7 @@ export function LabelingCanvas({
   onAddPin,
   onMoveBadge,
   onSelectPin,
+  labelStyle,
   readOnly = false,
 }: LabelingCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -202,7 +210,7 @@ export function LabelingCanvas({
             refY="2.5"
             orient="auto"
           >
-            <polygon points="0 0, 5 2.5, 0 5" fill="white" opacity="0.9" />
+            <polygon points="0 0, 5 2.5, 0 5" fill={labelStyle.arrowColor} opacity="0.9" />
           </marker>
           <marker
             id="arrowhead-selected"
@@ -212,7 +220,7 @@ export function LabelingCanvas({
             refY="2.5"
             orient="auto"
           >
-            <polygon points="0 0, 5 2.5, 0 5" fill="oklch(0.68 0.14 196)" opacity="1" />
+            <polygon points="0 0, 5 2.5, 0 5" fill={labelStyle.arrowColor} opacity="1" />
           </marker>
         </defs>
 
@@ -226,8 +234,8 @@ export function LabelingCanvas({
                 y1={`${pin.badgeY}%`}
                 x2={`${pin.x}%`}
                 y2={`${pin.y}%`}
-                stroke={isSelected ? 'oklch(0.68 0.14 196)' : 'white'}
-                strokeWidth={isSelected ? 1.5 : 1}
+                stroke={labelStyle.arrowColor}
+                strokeWidth={isSelected ? labelStyle.arrowThickness + 0.5 : labelStyle.arrowThickness}
                 strokeOpacity={isSelected ? 1 : 0.7}
                 markerEnd={isSelected ? 'url(#arrowhead-selected)' : 'url(#arrowhead)'}
               />
@@ -253,6 +261,7 @@ export function LabelingCanvas({
           onMove={onMoveBadge}
           onSelect={() => onSelectPin(selectedPinId === pin.id ? null : pin.id)}
           selected={selectedPinId === pin.id}
+          labelStyle={labelStyle}
           readOnly={readOnly}
         />
       ))}

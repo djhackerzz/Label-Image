@@ -17,6 +17,24 @@ export type Pin = {
   label: string
 }
 
+export type LabelStyle = {
+  textColor: string
+  fontSize: number
+  bold: boolean
+  italic: boolean
+  arrowColor: string
+  arrowThickness: number
+}
+
+export const DEFAULT_LABEL_STYLE: LabelStyle = {
+  textColor: '#ffffff',
+  fontSize: 11,
+  bold: true,
+  italic: false,
+  arrowColor: '#ffffff',
+  arrowThickness: 1,
+}
+
 const DEMO_IMAGE =
   'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG-20260807-WA0000-kghbLoXdqOyxRBCqFA2YdBbnbnjysK.jpg'
 
@@ -146,6 +164,7 @@ export function AnatomyLabeler() {
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null)
   const [showExport, setShowExport] = useState(false)
   const [organName, setOrganName] = useState('')
+  const [labelStyle, setLabelStyle] = useState<LabelStyle>(DEFAULT_LABEL_STYLE)
 
   const loadImage = useCallback((src: string, alt: string, name: string) => {
     setImageSrc(src)
@@ -350,6 +369,7 @@ export function AnatomyLabeler() {
                 onAddPin={handleAddPin}
                 onMoveBadge={handleMoveBadge}
                 onSelectPin={setSelectedPinId}
+                labelStyle={labelStyle}
               />
             ) : (
               <UploadDropzone onUpload={handleFileUpload} onDemo={handleDemo} />
@@ -380,6 +400,8 @@ export function AnatomyLabeler() {
           onDeletePin={handleDeletePin}
           selectedPinId={selectedPinId}
           onSelectPin={setSelectedPinId}
+          labelStyle={labelStyle}
+          onLabelStyleChange={setLabelStyle}
         />
       </main>
 
@@ -390,6 +412,7 @@ export function AnatomyLabeler() {
           imageAlt={imageAlt}
           pins={pins}
           organName={organName}
+          labelStyle={labelStyle}
           onClose={() => setShowExport(false)}
         />
       )}

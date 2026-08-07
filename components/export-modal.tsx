@@ -4,13 +4,14 @@ import { useEffect, useRef, useState } from 'react'
 import { toPng } from 'html-to-image'
 import { X, Printer, ImageDown, AlertCircle, Loader2 } from 'lucide-react'
 import { LabelingCanvas } from './labeling-canvas'
-import type { Pin } from './anatomy-labeler'
+import type { LabelStyle, Pin } from './anatomy-labeler'
 
 interface ExportModalProps {
   imageSrc: string
   imageAlt: string
   pins: Pin[]
   organName: string
+  labelStyle: LabelStyle
   onClose: () => void
 }
 
@@ -19,6 +20,7 @@ export function ExportModal({
   imageAlt,
   pins,
   organName,
+  labelStyle,
   onClose,
 }: ExportModalProps) {
   const printAreaRef = useRef<HTMLDivElement>(null)
@@ -158,6 +160,7 @@ export function ExportModal({
                   onAddPin={() => {}}
                   onMoveBadge={() => {}}
                   onSelectPin={() => {}}
+                  labelStyle={labelStyle}
                   readOnly
                 />
               </div>
@@ -212,6 +215,7 @@ export function ExportModal({
             onAddPin={() => {}}
             onMoveBadge={() => {}}
             onSelectPin={() => {}}
+            labelStyle={labelStyle}
             readOnly
           />
         </div>
