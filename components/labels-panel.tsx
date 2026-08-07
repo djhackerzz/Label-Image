@@ -236,10 +236,28 @@ export function LabelsPanel({
               .filter((p) => p.label.trim())
               .map((p) => (
                 <p key={p.id} className="text-xs text-muted-foreground leading-5 flex gap-2">
-                  <span className="text-foreground font-bold shrink-0 w-5 text-right">
+                  <span
+                    className="shrink-0 w-5 text-right"
+                    style={{
+                      color: labelStyle.textColor,
+                      fontSize: `${labelStyle.fontSize}px`,
+                      fontWeight: labelStyle.bold ? 700 : 400,
+                      fontStyle: labelStyle.italic ? 'italic' : 'normal',
+                    }}
+                  >
                     {p.number}.
                   </span>
-                  <span className="truncate">{p.label}</span>
+                  <span
+                    className="truncate"
+                    style={{
+                      color: labelStyle.textColor,
+                      fontSize: `${labelStyle.fontSize}px`,
+                      fontWeight: labelStyle.bold ? 700 : 400,
+                      fontStyle: labelStyle.italic ? 'italic' : 'normal',
+                    }}
+                  >
+                    {p.label}
+                  </span>
                 </p>
               ))}
           </div>

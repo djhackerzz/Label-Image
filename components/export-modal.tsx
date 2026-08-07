@@ -174,10 +174,26 @@ export function ExportModal({
                   <div className="grid grid-cols-2 gap-x-8 gap-y-1.5">
                     {pins.map((pin) => (
                       <div key={pin.id} className="flex items-baseline gap-2">
-                        <span className="text-white font-bold text-sm min-w-[1.6rem] shrink-0 text-right">
+                        <span
+                          className="min-w-[1.6rem] shrink-0 text-right"
+                          style={{
+                            color: labelStyle.textColor,
+                            fontSize: `${labelStyle.fontSize}px`,
+                            fontWeight: labelStyle.bold ? 700 : 400,
+                            fontStyle: labelStyle.italic ? 'italic' : 'normal',
+                          }}
+                        >
                           {pin.number}.
                         </span>
-                        <span className="text-white/80 text-sm leading-snug">
+                        <span
+                          className="leading-snug"
+                          style={{
+                            color: labelStyle.textColor,
+                            fontSize: `${labelStyle.fontSize}px`,
+                            fontWeight: labelStyle.bold ? 700 : 400,
+                            fontStyle: labelStyle.italic ? 'italic' : 'normal',
+                          }}
+                        >
                           {pin.label.trim() || (
                             <em className="text-white/25 not-italic">unlabeled</em>
                           )}
