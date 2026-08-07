@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { Trash2, Pin } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Pin as PinType } from './anatomy-labeler'
+import type { LabelStyle, Pin as PinType } from './anatomy-labeler'
 
 interface LabelsPanelProps {
   pins: PinType[]
@@ -13,6 +13,7 @@ interface LabelsPanelProps {
   onDeletePin: (id: string) => void
   selectedPinId: string | null
   onSelectPin: (id: string | null) => void
+  labelStyle: LabelStyle
 }
 
 export function LabelsPanel({
@@ -23,6 +24,7 @@ export function LabelsPanel({
   onDeletePin,
   selectedPinId,
   onSelectPin,
+  labelStyle,
 }: LabelsPanelProps) {
   const selectedRef = useRef<HTMLDivElement>(null)
 
@@ -161,10 +163,28 @@ export function LabelsPanel({
               .filter((p) => p.label.trim())
               .map((p) => (
                 <p key={p.id} className="text-xs text-muted-foreground leading-5 flex gap-2">
-                  <span className="text-foreground font-bold shrink-0 w-5 text-right">
+                  <span
+                    className="shrink-0 w-5 text-right"
+                    style={{
+                      color: labelStyle.numberColor,
+                      fontSize: `${labelStyle.numberFontSize}px`,
+                      fontWeight: 700,
+                      fontStyle: 'normal',
+                    }}
+                  >
                     {p.number}.
                   </span>
-                  <span className="truncate">{p.label}</span>
+                  <span
+                    className="truncate"
+                    style={{
+                      color: labelStyle.textColor,
+                      fontSize: `${labelStyle.fontSize}px`,
+                      fontWeight: labelStyle.bold ? 700 : 400,
+                      fontStyle: labelStyle.italic ? 'italic' : 'normal',
+                    }}
+                  >
+                    {p.label}
+                  </span>
                 </p>
               ))}
           </div>

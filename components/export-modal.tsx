@@ -4,13 +4,14 @@ import { useEffect, useRef, useState } from 'react'
 import { toPng } from 'html-to-image'
 import { X, Printer, ImageDown, AlertCircle, Loader2 } from 'lucide-react'
 import { LabelingCanvas } from './labeling-canvas'
-import type { Pin } from './anatomy-labeler'
+import type { LabelStyle, Pin } from './anatomy-labeler'
 
 interface ExportModalProps {
   imageSrc: string
   imageAlt: string
   pins: Pin[]
   organName: string
+  labelStyle: LabelStyle
   onClose: () => void
 }
 
@@ -19,6 +20,7 @@ export function ExportModal({
   imageAlt,
   pins,
   organName,
+  labelStyle,
   onClose,
 }: ExportModalProps) {
   const printAreaRef = useRef<HTMLDivElement>(null)
@@ -158,6 +160,7 @@ export function ExportModal({
                   onAddPin={() => {}}
                   onMoveBadge={() => {}}
                   onSelectPin={() => {}}
+                  labelStyle={labelStyle}
                   readOnly
                 />
               </div>
@@ -171,10 +174,26 @@ export function ExportModal({
                   <div className="grid grid-cols-2 gap-x-8 gap-y-1.5">
                     {pins.map((pin) => (
                       <div key={pin.id} className="flex items-baseline gap-2">
-                        <span className="text-white font-bold text-sm min-w-[1.6rem] shrink-0 text-right">
+                        <span
+                          className="min-w-[1.6rem] shrink-0 text-right"
+                          style={{
+                            color: labelStyle.numberColor,
+                            fontSize: `${labelStyle.numberFontSize}px`,
+                            fontWeight: 700,
+                            fontStyle: 'normal',
+                          }}
+                        >
                           {pin.number}.
                         </span>
-                        <span className="text-white/80 text-sm leading-snug">
+                        <span
+                          className="leading-snug"
+                          style={{
+                            color: labelStyle.textColor,
+                            fontSize: `${labelStyle.fontSize}px`,
+                            fontWeight: labelStyle.bold ? 700 : 400,
+                            fontStyle: labelStyle.italic ? 'italic' : 'normal',
+                          }}
+                        >
                           {pin.label.trim() || (
                             <em className="text-white/25 not-italic">unlabeled</em>
                           )}
@@ -212,6 +231,7 @@ export function ExportModal({
             onAddPin={() => {}}
             onMoveBadge={() => {}}
             onSelectPin={() => {}}
+            labelStyle={labelStyle}
             readOnly
           />
         </div>
@@ -224,10 +244,10 @@ export function ExportModal({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px 40px' }}>
               {pins.map((pin) => (
                 <div key={pin.id} style={{ display: 'flex', gap: '8px', alignItems: 'baseline' }}>
-                  <span style={{ fontWeight: 700, fontSize: '13px', minWidth: '1.6rem', textAlign: 'right', flexShrink: 0 }}>
+                  <span style={{ fontWeight: 700, fontSize: `${labelStyle.numberFontSize}px`, color: labelStyle.numberColor, minWidth: '1.6rem', textAlign: 'right', flexShrink: 0 }}>
                     {pin.number}.
                   </span>
-                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.82)' }}>
+                  <span style={{ fontSize: `${labelStyle.fontSize}px`, color: labelStyle.textColor, fontWeight: labelStyle.bold ? 700 : 400, fontStyle: labelStyle.italic ? 'italic' : 'normal' }}>
                     {pin.label.trim() || 'unlabeled'}
                   </span>
                 </div>

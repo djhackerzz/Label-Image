@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { Upload, Undo2, Trash2, Download, Pin, Eye, Scan } from 'lucide-react'
+import { Upload, Undo2, Trash2, Download, Pin, Eye, Scan, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LabelingCanvas } from './labeling-canvas'
 import { LabelsPanel } from './labels-panel'
 import { ExportModal } from './export-modal'
+import { LabelStyleSettings } from './label-style-settings'
 
 export type Pin = {
   id: string
@@ -15,6 +16,28 @@ export type Pin = {
   badgeX: number // badge position — draggable
   badgeY: number
   label: string
+}
+
+export type LabelStyle = {
+  textColor: string
+  fontSize: number
+  bold: boolean
+  italic: boolean
+  numberColor: string
+  numberFontSize: number
+  arrowColor: string
+  arrowThickness: number
+}
+
+export const DEFAULT_LABEL_STYLE: LabelStyle = {
+  textColor: '#ffffff',
+  fontSize: 11,
+  bold: true,
+  italic: false,
+  numberColor: '#ffffff',
+  numberFontSize: 13,
+  arrowColor: '#ffffff',
+  arrowThickness: 1,
 }
 
 const DEMO_IMAGE =
@@ -145,7 +168,9 @@ export function AnatomyLabeler() {
   const [mode, setMode] = useState<'add' | 'view'>('add')
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null)
   const [showExport, setShowExport] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [organName, setOrganName] = useState('')
+  const [labelStyle, setLabelStyle] = useState<LabelStyle>(DEFAULT_LABEL_STYLE)
 
   const loadImage = useCallback((src: string, alt: string, name: string) => {
     setImageSrc(src)
@@ -227,7 +252,7 @@ export function AnatomyLabeler() {
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
-      {/* ── Header ─────────────────────────────────────────────────────── */}
+      {/* ── Header ────���────────────────────────────────────────────────── */}
       <header className="flex items-center gap-2 px-4 h-13 border-b border-border bg-card shrink-0">
         {/* Brand */}
         <div className="flex items-center gap-2 mr-1">
@@ -302,6 +327,11 @@ export function AnatomyLabeler() {
 
         <div className="flex-1" />
 
+        <ToolbarBtn onClick={() => setShowSettings(true)} title="Open label appearance settings">
+          <Settings size={13} />
+          <span className="hidden sm:inline">Settings</span>
+        </ToolbarBtn>
+
         {/* Right actions */}
         {imageSrc && (
           <>
@@ -350,6 +380,7 @@ export function AnatomyLabeler() {
                 onAddPin={handleAddPin}
                 onMoveBadge={handleMoveBadge}
                 onSelectPin={setSelectedPinId}
+                labelStyle={labelStyle}
               />
             ) : (
               <UploadDropzone onUpload={handleFileUpload} onDemo={handleDemo} />
@@ -380,8 +411,17 @@ export function AnatomyLabeler() {
           onDeletePin={handleDeletePin}
           selectedPinId={selectedPinId}
           onSelectPin={setSelectedPinId}
+          labelStyle={labelStyle}
         />
       </main>
+
+      {showSettings && (
+        <LabelStyleSettings
+          style={labelStyle}
+          onChange={setLabelStyle}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
 
       {/* Export modal */}
       {showExport && imageSrc && (
@@ -390,6 +430,7 @@ export function AnatomyLabeler() {
           imageAlt={imageAlt}
           pins={pins}
           organName={organName}
+          labelStyle={labelStyle}
           onClose={() => setShowExport(false)}
         />
       )}
