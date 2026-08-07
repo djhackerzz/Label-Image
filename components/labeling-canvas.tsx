@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { Pin } from './anatomy-labeler'
 
@@ -33,21 +33,24 @@ function DraggableBadge({
   readOnly?: boolean
 }) {
   const hasMoved = useRef(false)
+  const [isDragging, setIsDragging] = useState(false)
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent) => {
     e.stopPropagation()
     e.preventDefault()
     hasMoved.current = false
 
     const startX = e.clientX
     const startY = e.clientY
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
 
-    const onMouseMove = (me: MouseEvent) => {
+    const handlePointerMove = (me: PointerEvent) => {
       if (
         !hasMoved.current &&
         (Math.abs(me.clientX - startX) > 4 || Math.abs(me.clientY - startY) > 4)
       ) {
         hasMoved.current = true
+        setIsDragging(true)
       }
       if (!hasMoved.current || readOnly) return
       const rect = getContainerRect()
@@ -57,14 +60,16 @@ function DraggableBadge({
       onMove(pin.id, x, y)
     }
 
-    const onMouseUp = () => {
+    const handlePointerUp = () => {
+      setIsDragging(false)
       if (!hasMoved.current) onSelect()
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
+      hasMoved.current = false
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
     }
 
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
   }
 
   return (
@@ -75,18 +80,43 @@ function DraggableBadge({
         transform: 'translate(-50%, -50%)',
       }}
       className={cn(
-        'absolute z-10 flex items-center justify-center w-7 h-7 rounded-full',
-        'text-xs font-bold select-none transition-shadow',
-        'bg-white text-gray-900 shadow-[0_0_0_1.5px_rgba(255,255,255,0.4)]',
-        !readOnly && 'cursor-move hover:shadow-[0_0_0_2px_oklch(0.68_0.14_196)]',
-        selected && 'shadow-[0_0_0_2px_oklch(0.68_0.14_196),0_0_12px_oklch(0.68_0.14_196/0.5)]',
+        'absolute z-20 flex items-center justify-center w-7 h-7 rounded-full',
+        'text-[11px] font-bold select-none transition-all',
+        'bg-white text-gray-900',
+        !readOnly && 'cursor-grab active:cursor-grabbing',
+        isDragging && 'scale-110',
+        selected
+          ? 'shadow-[0_0_0_2.5px_oklch(0.68_0.14_196),0_0_14px_oklch(0.68_0.14_196/0.6)]'
+          : 'shadow-[0_1px_4px_rgba(0,0,0,0.8),0_0_0_1.5px_rgba(255,255,255,0.35)]',
       )}
-      onMouseDown={handleMouseDown}
+      onPointerDown={handlePointerDown}
       onClick={(e) => e.stopPropagation()}
       role="button"
       aria-label={`Label ${pin.number}: ${pin.label || 'unlabeled'}`}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelect()
+        }
+      }}
     >
       {pin.number}
+
+      {/* Hover tooltip showing label */}
+      {pin.label && (
+        <span
+          className={cn(
+            'pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2',
+            'bg-gray-900/95 text-white text-[10px] font-normal whitespace-nowrap',
+            'px-2 py-0.5 rounded-md border border-white/10',
+            'opacity-0 group-hover:opacity-100 transition-opacity',
+          )}
+          aria-hidden="true"
+        >
+          {pin.label}
+        </span>
+      )}
     </div>
   )
 }
@@ -113,78 +143,105 @@ export function LabelingCanvas({
   const handleContainerClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (readOnly || mode !== 'add') return
+
+      // Ignore clicks on badges or SVG
+      const target = e.target as HTMLElement
+      if (target.closest('[role="button"]') || target.tagName === 'svg' || target.closest('svg')) {
+        onSelectPin(null)
+        return
+      }
+
       const rect = getContainerRect()
       if (!rect) return
       const x = ((e.clientX - rect.left) / rect.width) * 100
       const y = ((e.clientY - rect.top) / rect.height) * 100
 
-      // Auto-place badge: offset away from pin, respect image edges
+      // Auto-offset badge away from pin dot, stay within bounds
       const isRightHalf = x > 50
       const badgeX = isRightHalf
-        ? Math.max(8, x - 17)
-        : Math.min(92, x + 17)
-      const badgeY = Math.max(5, Math.min(95, y - 3))
+        ? Math.max(6, x - 18)
+        : Math.min(94, x + 18)
+      const badgeY = Math.max(5, Math.min(93, y - 4))
 
       onAddPin({ x, y, badgeX, badgeY })
     },
-    [readOnly, mode, onAddPin, getContainerRect],
+    [readOnly, mode, onAddPin, getContainerRect, onSelectPin],
   )
-
-  const handleBgClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === containerRef.current || (e.target as HTMLElement).tagName === 'IMG') {
-      onSelectPin(null)
-    }
-  }
 
   return (
     <div
       ref={containerRef}
       className={cn(
-        'relative inline-block',
+        'relative inline-block select-none',
         !readOnly && mode === 'add' && 'cursor-crosshair',
         !readOnly && mode === 'view' && 'cursor-default',
       )}
-      onClick={(e) => {
-        handleContainerClick(e)
-        handleBgClick(e)
-      }}
+      onClick={handleContainerClick}
     >
       {/* Specimen image */}
       <img
         src={imageSrc}
         alt={imageAlt}
         className="block max-w-full"
-        style={{ maxHeight: readOnly ? '65vh' : 'calc(100vh - 112px)' }}
+        style={{ maxHeight: readOnly ? '65vh' : 'calc(100vh - 116px)' }}
         draggable={false}
       />
 
-      {/* SVG leader lines + pin dots */}
+      {/* SVG: arrowhead marker + leader lines + pin dots */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none"
         aria-hidden="true"
+        overflow="visible"
       >
-        {pins.map((pin) => (
-          <g key={pin.id}>
-            {/* Leader line from badge center to pin dot */}
-            <line
-              x1={`${pin.badgeX}%`}
-              y1={`${pin.badgeY}%`}
-              x2={`${pin.x}%`}
-              y2={`${pin.y}%`}
-              stroke="white"
-              strokeWidth="1"
-              strokeOpacity={selectedPinId === pin.id ? 1 : 0.75}
-            />
-            {/* Pin dot at structure point */}
-            <circle
-              cx={`${pin.x}%`}
-              cy={`${pin.y}%`}
-              r="2.5"
-              fill="white"
-              opacity={selectedPinId === pin.id ? 1 : 0.8}
-            />
-          </g>
-        ))}
+        <defs>
+          <marker
+            id="arrowhead"
+            markerWidth="5"
+            markerHeight="5"
+            refX="3"
+            refY="2.5"
+            orient="auto"
+          >
+            <polygon points="0 0, 5 2.5, 0 5" fill="white" opacity="0.9" />
+          </marker>
+          <marker
+            id="arrowhead-selected"
+            markerWidth="5"
+            markerHeight="5"
+            refX="3"
+            refY="2.5"
+            orient="auto"
+          >
+            <polygon points="0 0, 5 2.5, 0 5" fill="oklch(0.68 0.14 196)" opacity="1" />
+          </marker>
+        </defs>
+
+        {pins.map((pin) => {
+          const isSelected = selectedPinId === pin.id
+          return (
+            <g key={pin.id}>
+              {/* Leader line from badge to pin dot with arrowhead at pin end */}
+              <line
+                x1={`${pin.badgeX}%`}
+                y1={`${pin.badgeY}%`}
+                x2={`${pin.x}%`}
+                y2={`${pin.y}%`}
+                stroke={isSelected ? 'oklch(0.68 0.14 196)' : 'white'}
+                strokeWidth={isSelected ? 1.5 : 1}
+                strokeOpacity={isSelected ? 1 : 0.7}
+                markerEnd={isSelected ? 'url(#arrowhead-selected)' : 'url(#arrowhead)'}
+              />
+              {/* Pin dot at structure */}
+              <circle
+                cx={`${pin.x}%`}
+                cy={`${pin.y}%`}
+                r="3"
+                fill={isSelected ? 'oklch(0.68 0.14 196)' : 'white'}
+                opacity={isSelected ? 1 : 0.8}
+              />
+            </g>
+          )
+        })}
       </svg>
 
       {/* Numbered badge overlays */}
@@ -194,7 +251,7 @@ export function LabelingCanvas({
           pin={pin}
           getContainerRect={getContainerRect}
           onMove={onMoveBadge}
-          onSelect={() => onSelectPin(pin.id)}
+          onSelect={() => onSelectPin(selectedPinId === pin.id ? null : pin.id)}
           selected={selectedPinId === pin.id}
           readOnly={readOnly}
         />
