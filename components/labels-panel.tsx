@@ -14,7 +14,6 @@ interface LabelsPanelProps {
   selectedPinId: string | null
   onSelectPin: (id: string | null) => void
   labelStyle: LabelStyle
-  onLabelStyleChange: (style: LabelStyle) => void
 }
 
 export function LabelsPanel({
@@ -26,7 +25,6 @@ export function LabelsPanel({
   selectedPinId,
   onSelectPin,
   labelStyle,
-  onLabelStyleChange,
 }: LabelsPanelProps) {
   const selectedRef = useRef<HTMLDivElement>(null)
 
@@ -72,77 +70,6 @@ export function LabelsPanel({
             Click badge to select
           </span>
         )}
-      </div>
-
-      {/* Shared label style controls */}
-      <div className="px-4 py-3 border-b border-border bg-muted/20 shrink-0">
-        <div className="flex items-center justify-between mb-2.5">
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Label Style</p>
-          <span className="text-[10px] text-muted-foreground/50">Applies to all labels</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <label className="flex items-center gap-2 rounded-md border border-border bg-background/40 px-2 py-1.5 text-[11px] text-muted-foreground">
-            <input
-              type="color"
-              value={labelStyle.textColor}
-              onChange={(e) => onLabelStyleChange({ ...labelStyle, textColor: e.target.value })}
-              className="size-5 cursor-pointer rounded border-0 bg-transparent p-0"
-              aria-label="Label font color"
-            />
-            <span>Font color</span>
-          </label>
-          <label className="flex items-center gap-2 rounded-md border border-border bg-background/40 px-2 py-1.5 text-[11px] text-muted-foreground">
-            <input
-              type="color"
-              value={labelStyle.arrowColor}
-              onChange={(e) => onLabelStyleChange({ ...labelStyle, arrowColor: e.target.value })}
-              className="size-5 cursor-pointer rounded border-0 bg-transparent p-0"
-              aria-label="Arrow color"
-            />
-            <span>Arrow color</span>
-          </label>
-          <label className="flex items-center justify-between gap-2 rounded-md border border-border bg-background/40 px-2 py-1.5 text-[11px] text-muted-foreground">
-            <span>Font size</span>
-            <select
-              value={labelStyle.fontSize}
-              onChange={(e) => onLabelStyleChange({ ...labelStyle, fontSize: Number(e.target.value) })}
-              className="bg-transparent text-foreground outline-none"
-              aria-label="Label font size"
-            >
-              {[9, 10, 11, 12, 14, 16, 18].map((size) => <option key={size} value={size}>{size}px</option>)}
-            </select>
-          </label>
-          <label className="flex items-center justify-between gap-2 rounded-md border border-border bg-background/40 px-2 py-1.5 text-[11px] text-muted-foreground">
-            <span>Arrow width</span>
-            <select
-              value={labelStyle.arrowThickness}
-              onChange={(e) => onLabelStyleChange({ ...labelStyle, arrowThickness: Number(e.target.value) })}
-              className="bg-transparent text-foreground outline-none"
-              aria-label="Arrow thickness"
-            >
-              {[1, 1.5, 2, 3, 4].map((width) => <option key={width} value={width}>{width}px</option>)}
-            </select>
-          </label>
-        </div>
-        <div className="flex items-center gap-2 mt-2">
-          <button
-            type="button"
-            onClick={() => onLabelStyleChange({ ...labelStyle, bold: !labelStyle.bold })}
-            aria-pressed={labelStyle.bold}
-            className={cn('rounded-md border px-2.5 py-1 text-xs font-bold transition-colors', labelStyle.bold ? 'border-primary bg-primary/15 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}
-          >
-            B
-          </button>
-          <button
-            type="button"
-            onClick={() => onLabelStyleChange({ ...labelStyle, italic: !labelStyle.italic })}
-            aria-pressed={labelStyle.italic}
-            className={cn('rounded-md border px-2.5 py-1 text-xs italic transition-colors', labelStyle.italic ? 'border-primary bg-primary/15 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}
-          >
-            I
-          </button>
-          <span className="text-[10px] text-muted-foreground/50">Defaults stay active for new images</span>
-        </div>
       </div>
 
       {/* Labels list */}
@@ -239,10 +166,10 @@ export function LabelsPanel({
                   <span
                     className="shrink-0 w-5 text-right"
                     style={{
-                      color: labelStyle.textColor,
-                      fontSize: `${labelStyle.fontSize}px`,
-                      fontWeight: labelStyle.bold ? 700 : 400,
-                      fontStyle: labelStyle.italic ? 'italic' : 'normal',
+                      color: labelStyle.numberColor,
+                      fontSize: `${labelStyle.numberFontSize}px`,
+                      fontWeight: 700,
+                      fontStyle: 'normal',
                     }}
                   >
                     {p.number}.

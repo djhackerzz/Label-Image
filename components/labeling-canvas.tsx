@@ -81,10 +81,10 @@ function DraggableBadge({
         left: `${pin.badgeX}%`,
         top: `${pin.badgeY}%`,
         transform: 'translate(-50%, -50%)',
-        color: labelStyle.textColor,
-        fontSize: `${labelStyle.fontSize}px`,
-        fontWeight: labelStyle.bold ? 700 : 400,
-        fontStyle: labelStyle.italic ? 'italic' : 'normal',
+        color: labelStyle.numberColor,
+        fontSize: `${labelStyle.numberFontSize}px`,
+        fontWeight: 700,
+        fontStyle: 'normal',
       }}
       className={cn(
         'group absolute z-20 flex items-center justify-center w-7 h-7 rounded-full',
