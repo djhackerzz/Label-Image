@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { X, Printer, AlertCircle } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { toPng } from 'html-to-image'
+import { X, Printer, ImageDown, AlertCircle, Loader2 } from 'lucide-react'
 import { LabelingCanvas } from './labeling-canvas'
 import type { Pin } from './anatomy-labeler'
 
@@ -21,6 +22,8 @@ export function ExportModal({
   onClose,
 }: ExportModalProps) {
   const printAreaRef = useRef<HTMLDivElement>(null)
+  const imageExportRef = useRef<HTMLDivElement>(null)
+  const [isSavingImage, setIsSavingImage] = useState(false)
   const unnamedCount = pins.filter((p) => !p.label.trim()).length
 
   // Close on Escape
@@ -45,6 +48,33 @@ export function ExportModal({
     }
   }
 
+  const handleSaveImage = async () => {
+    if (!imageExportRef.current || isSavingImage) return
+
+    setIsSavingImage(true)
+    try {
+      const dataUrl = await toPng(imageExportRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: '#050608',
+      })
+      const link = document.createElement('a')
+      const safeName = (organName || 'anatomy-specimen')
+        .trim()
+        .replace(/[^a-z0-9]+/gi, '-')
+        .replace(/^-|-$/g, '')
+        .toLowerCase()
+      link.download = `${safeName || 'anatomy-specimen'}.png`
+      link.href = dataUrl
+      link.click()
+    } catch (error) {
+      console.error('[v0] Image export failed:', error)
+      window.alert('Unable to save the image. Please try again.')
+    } finally {
+      setIsSavingImage(false)
+    }
+  }
+
   return (
     <>
       {/* Backdrop + modal */}
@@ -64,13 +94,21 @@ export function ExportModal({
             <div>
               <h2 className="text-sm font-semibold text-foreground">Export / Print</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Review your labeled diagram, then print or save as PDF
+                Download a PNG image or print your labeled diagram as a PDF
               </p>
             </div>
             <div className="flex items-center gap-3">
               <button
+                onClick={handleSaveImage}
+                disabled={isSavingImage}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-60 transition-opacity"
+              >
+                {isSavingImage ? <Loader2 size={14} className="animate-spin" /> : <ImageDown size={14} />}
+                {isSavingImage ? 'Saving image…' : 'Save as PNG'}
+              </button>
+              <button
                 onClick={handlePrint}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                className="flex items-center gap-2 px-4 py-2 border border-border text-foreground rounded-lg text-sm font-medium hover:bg-muted transition-colors"
               >
                 <Printer size={14} />
                 Print / Save PDF
@@ -97,7 +135,10 @@ export function ExportModal({
 
           {/* Preview body */}
           <div className="p-6 overflow-auto max-h-[80vh]">
-            <div className="bg-[#050608] rounded-xl p-6 border border-white/5">
+            <div
+              ref={imageExportRef}
+              className="bg-[#050608] rounded-xl p-6 border border-white/5"
+            >
               {/* Title */}
               <h1 className="text-white text-lg font-bold text-center tracking-wide mb-1">
                 {organName || 'Anatomy Specimen'}
