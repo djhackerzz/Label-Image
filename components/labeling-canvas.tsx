@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback, useState } from 'react'
+import { useRef, useCallback, useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import type { LabelStyle, Pin } from './anatomy-labeler'
 
@@ -15,6 +15,7 @@ interface LabelingCanvasProps {
   onSelectPin: (id: string | null) => void
   labelStyle: LabelStyle
   readOnly?: boolean
+  bottomSpaceRatio?: number
 }
 
 // ── Draggable numbered badge ────────────────────────────────────────────────
@@ -26,6 +27,7 @@ function DraggableBadge({
   selected,
   readOnly,
   labelStyle,
+  scale,
 }: {
   pin: Pin
   getContainerRect: () => DOMRect | null
@@ -34,6 +36,7 @@ function DraggableBadge({
   selected: boolean
   labelStyle: LabelStyle
   readOnly?: boolean
+  scale: number
 }) {
   const hasMoved = useRef(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -47,6 +50,9 @@ function DraggableBadge({
     const startY = e.clientY
     ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
 
+    // Keep badges over the photo — the bottom space is reserved for the Key
+    const maxBadgeY = Math.min(97, 100 / scale - 3)
+
     const handlePointerMove = (me: PointerEvent) => {
       if (
         !hasMoved.current &&
@@ -59,8 +65,8 @@ function DraggableBadge({
       const rect = getContainerRect()
       if (!rect) return
       const x = Math.max(3, Math.min(97, ((me.clientX - rect.left) / rect.width) * 100))
-      const y = Math.max(3, Math.min(97, ((me.clientY - rect.top) / rect.height) * 100))
-      onMove(pin.id, x, y)
+      const y = Math.max(3, Math.min(maxBadgeY, ((me.clientY - rect.top) / rect.height) * 100))
+      onMove(pin.id, x, y * scale)
     }
 
     const handlePointerUp = () => {
@@ -79,7 +85,7 @@ function DraggableBadge({
     <div
       style={{
         left: `${pin.badgeX}%`,
-        top: `${pin.badgeY}%`,
+        top: `${pin.badgeY / scale}%`,
         transform: 'translate(-50%, -50%)',
         color: labelStyle.numberColor,
         fontSize: `${labelStyle.numberFontSize}px`,
@@ -140,8 +146,31 @@ export function LabelingCanvas({
   onSelectPin,
   labelStyle,
   readOnly = false,
+  bottomSpaceRatio = 0,
 }: LabelingCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const imgRef = useRef<HTMLImageElement>(null)
+  const padRef = useRef<HTMLDivElement>(null)
+  const [imageHeight, setImageHeight] = useState(0)
+  const [padHeight, setPadHeight] = useState(0)
+
+  useEffect(() => {
+    const imgEl = imgRef.current
+    const padEl = padRef.current
+    const measure = () => {
+      setImageHeight(imgEl?.getBoundingClientRect().height ?? 0)
+      setPadHeight(padEl?.getBoundingClientRect().height ?? 0)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    if (imgEl) ro.observe(imgEl)
+    if (padEl) ro.observe(padEl)
+    return () => ro.disconnect()
+  }, [bottomSpaceRatio])
+
+  // The Key panel below the photo grows the canvas. Scale maps photo-relative
+  // positions (what the pins store) into canvas-relative positions for display.
+  const scale = imageHeight > 0 ? (imageHeight + padHeight) / imageHeight : 1
 
   const getContainerRect = useCallback(
     () => containerRef.current?.getBoundingClientRect() ?? null,
@@ -162,9 +191,12 @@ export function LabelingCanvas({
       const rect = getContainerRect()
       if (!rect) return
       const x = ((e.clientX - rect.left) / rect.width) * 100
-      const y = ((e.clientY - rect.top) / rect.height) * 100
+      const yContainer = ((e.clientY - rect.top) / rect.height) * 100
+      // Clicks in the Key area below the photo do not place pins
+      if (yContainer > 100 / scale) return
+      const y = yContainer * scale
 
-      // Auto-offset badge away from pin dot, stay within bounds
+      // Auto-offset badge away from pin dot, stay within the photo
       const isRightHalf = x > 50
       const badgeX = isRightHalf
         ? Math.max(6, x - 18)
@@ -173,14 +205,17 @@ export function LabelingCanvas({
 
       onAddPin({ x, y, badgeX, badgeY })
     },
-    [readOnly, mode, onAddPin, getContainerRect, onSelectPin],
+    [readOnly, mode, onAddPin, getContainerRect, onSelectPin, scale],
   )
+
+  const minPadHeight = imageHeight * bottomSpaceRatio
+  const showPad = bottomSpaceRatio > 0
 
   return (
     <div
       ref={containerRef}
       className={cn(
-        'relative inline-block select-none',
+        'relative inline-block select-none m-auto',
         !readOnly && mode === 'add' && 'cursor-crosshair',
         !readOnly && mode === 'view' && 'cursor-default',
       )}
@@ -188,12 +223,72 @@ export function LabelingCanvas({
     >
       {/* Specimen image */}
       <img
+        ref={imgRef}
         src={imageSrc}
         alt={imageAlt}
         className="block max-w-full"
         style={{ maxHeight: readOnly ? '65vh' : 'calc(100vh - 116px)' }}
         draggable={false}
       />
+
+      {/* Key panel — space below the photo for label descriptions */}
+      {showPad && (
+        <div
+          ref={padRef}
+          className="relative w-full overflow-hidden border-t border-white/10"
+          style={{ minHeight: minPadHeight, backgroundColor: '#0a0c0f' }}
+        >
+          <div className="px-4 py-3">
+            <p className="mb-2 text-[10px] uppercase tracking-widest text-white/30">Key</p>
+            {pins.length === 0 ? (
+              <p className="text-xs text-white/30">
+                Descriptions will appear here as you name each label.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-x-6 gap-y-1.5">
+                {pins.map((pin) => (
+                  <button
+                    key={pin.id}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onSelectPin(selectedPinId === pin.id ? null : pin.id)
+                    }}
+                    className={cn(
+                      'flex items-baseline gap-2 text-left',
+                      !readOnly && 'cursor-pointer hover:opacity-80',
+                      selectedPinId === pin.id && 'opacity-70',
+                    )}
+                  >
+                    <span
+                      className="min-w-[1.4rem] shrink-0 text-right font-bold"
+                      style={{
+                        color: labelStyle.numberColor,
+                        fontSize: `${labelStyle.numberFontSize}px`,
+                      }}
+                    >
+                      {pin.number}.
+                    </span>
+                    <span
+                      className="leading-snug"
+                      style={{
+                        color: labelStyle.textColor,
+                        fontSize: `${labelStyle.fontSize}px`,
+                        fontWeight: labelStyle.bold ? 700 : 400,
+                        fontStyle: labelStyle.italic ? 'italic' : 'normal',
+                      }}
+                    >
+                      {pin.label.trim() || (
+                        <em className="text-white/25 not-italic">unlabeled</em>
+                      )}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* SVG: arrowhead marker + leader lines + pin dots */}
       <svg
@@ -231,9 +326,9 @@ export function LabelingCanvas({
               {/* Leader line from badge to pin dot with arrowhead at pin end */}
               <line
                 x1={`${pin.badgeX}%`}
-                y1={`${pin.badgeY}%`}
+                y1={`${pin.badgeY / scale}%`}
                 x2={`${pin.x}%`}
-                y2={`${pin.y}%`}
+                y2={`${pin.y / scale}%`}
                 stroke={labelStyle.arrowColor}
                 strokeWidth={isSelected ? labelStyle.arrowThickness + 0.5 : labelStyle.arrowThickness}
                 strokeOpacity={isSelected ? 1 : 0.7}
@@ -242,7 +337,7 @@ export function LabelingCanvas({
               {/* Pin dot at structure */}
               <circle
                 cx={`${pin.x}%`}
-                cy={`${pin.y}%`}
+                cy={`${pin.y / scale}%`}
                 r="3"
                 fill={isSelected ? 'oklch(0.68 0.14 196)' : 'white'}
                 opacity={isSelected ? 1 : 0.8}
@@ -263,6 +358,7 @@ export function LabelingCanvas({
           selected={selectedPinId === pin.id}
           labelStyle={labelStyle}
           readOnly={readOnly}
+          scale={scale}
         />
       ))}
     </div>

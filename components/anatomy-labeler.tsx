@@ -62,7 +62,7 @@ function UploadDropzone({
   }
 
   return (
-    <div className="flex flex-col items-center gap-5 max-w-sm w-full">
+    <div className="flex flex-col items-center gap-5 max-w-sm w-full m-auto">
       {/* Drop zone */}
       <div
         onDrop={handleDrop}
@@ -171,6 +171,7 @@ export function AnatomyLabeler() {
   const [showSettings, setShowSettings] = useState(false)
   const [organName, setOrganName] = useState('')
   const [labelStyle, setLabelStyle] = useState<LabelStyle>(DEFAULT_LABEL_STYLE)
+  const [bottomSpaceRatio, setBottomSpaceRatio] = useState(0)
 
   const loadImage = useCallback((src: string, alt: string, name: string) => {
     setImageSrc(src)
@@ -369,7 +370,7 @@ export function AnatomyLabeler() {
       <main className="flex flex-1 overflow-hidden">
         {/* Canvas column */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-auto flex items-center justify-center bg-[#050608] p-4">
+          <div className="flex-1 overflow-auto flex bg-[#050608] p-4">
             {imageSrc ? (
               <LabelingCanvas
                 imageSrc={imageSrc}
@@ -381,6 +382,7 @@ export function AnatomyLabeler() {
                 onMoveBadge={handleMoveBadge}
                 onSelectPin={setSelectedPinId}
                 labelStyle={labelStyle}
+                bottomSpaceRatio={bottomSpaceRatio}
               />
             ) : (
               <UploadDropzone onUpload={handleFileUpload} onDemo={handleDemo} />
@@ -420,6 +422,8 @@ export function AnatomyLabeler() {
           style={labelStyle}
           onChange={setLabelStyle}
           onClose={() => setShowSettings(false)}
+          bottomSpaceRatio={bottomSpaceRatio}
+          onBottomSpaceRatioChange={setBottomSpaceRatio}
         />
       )}
 
@@ -431,6 +435,7 @@ export function AnatomyLabeler() {
           pins={pins}
           organName={organName}
           labelStyle={labelStyle}
+          bottomSpaceRatio={bottomSpaceRatio}
           onClose={() => setShowExport(false)}
         />
       )}

@@ -12,6 +12,7 @@ interface ExportModalProps {
   pins: Pin[]
   organName: string
   labelStyle: LabelStyle
+  bottomSpaceRatio?: number
   onClose: () => void
 }
 
@@ -21,6 +22,7 @@ export function ExportModal({
   pins,
   organName,
   labelStyle,
+  bottomSpaceRatio = 0,
   onClose,
 }: ExportModalProps) {
   const printAreaRef = useRef<HTMLDivElement>(null)
@@ -161,6 +163,7 @@ export function ExportModal({
                   onMoveBadge={() => {}}
                   onSelectPin={() => {}}
                   labelStyle={labelStyle}
+                  bottomSpaceRatio={bottomSpaceRatio}
                   readOnly
                 />
               </div>
@@ -232,6 +235,7 @@ export function ExportModal({
             onMoveBadge={() => {}}
             onSelectPin={() => {}}
             labelStyle={labelStyle}
+            bottomSpaceRatio={bottomSpaceRatio}
             readOnly
           />
         </div>

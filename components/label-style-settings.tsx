@@ -8,12 +8,21 @@ interface LabelStyleSettingsProps {
   style: LabelStyle
   onChange: (style: LabelStyle) => void
   onClose: () => void
+  bottomSpaceRatio: number
+  onBottomSpaceRatioChange: (value: number) => void
 }
 
 const fontSizes = [9, 10, 11, 12, 13, 14, 16, 18]
 const arrowWidths = [1, 1.5, 2, 3, 4]
+const bottomSpaceOptions = [0, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4]
 
-export function LabelStyleSettings({ style, onChange, onClose }: LabelStyleSettingsProps) {
+export function LabelStyleSettings({
+  style,
+  onChange,
+  onClose,
+  bottomSpaceRatio,
+  onBottomSpaceRatioChange,
+}: LabelStyleSettingsProps) {
   const update = <K extends keyof LabelStyle>(key: K, value: LabelStyle[K]) => {
     onChange({ ...style, [key]: value })
   }
@@ -92,6 +101,21 @@ export function LabelStyleSettings({ style, onChange, onClose }: LabelStyleSetti
                 </select>
               </label>
             </div>
+          </section>
+
+          <section className="mt-4 rounded-xl border border-border bg-background/35 p-4">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Canvas space</p>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-2 text-xs text-muted-foreground">
+                Space below photo
+                <select value={bottomSpaceRatio} onChange={(e) => onBottomSpaceRatioChange(Number(e.target.value))} className="h-10 rounded-lg border border-border bg-card px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring" aria-label="Space below photo">
+                  {bottomSpaceOptions.map((ratio) => <option key={ratio} value={ratio}>{Math.round(ratio * 100)}%</option>)}
+                </select>
+              </label>
+            </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground/70">
+              Adds a Key area beneath the photo so label descriptions can be written when the specimen itself has no room.
+            </p>
           </section>
         </div>
 
