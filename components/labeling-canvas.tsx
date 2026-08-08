@@ -263,7 +263,7 @@ export function LabelingCanvas({
                     <span
                       className="min-w-[1.4rem] shrink-0 text-right font-bold"
                       style={{
-                        color: labelStyle.numberColor,
+                        color: labelStyle.textColor,
                         fontSize: `${labelStyle.numberFontSize}px`,
                       }}
                     >
