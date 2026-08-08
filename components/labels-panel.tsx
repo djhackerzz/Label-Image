@@ -166,7 +166,7 @@ export function LabelsPanel({
                   <span
                     className="shrink-0 w-5 text-right"
                     style={{
-                      color: labelStyle.numberColor,
+                      color: labelStyle.textColor,
                       fontSize: `${labelStyle.numberFontSize}px`,
                       fontWeight: 700,
                       fontStyle: 'normal',

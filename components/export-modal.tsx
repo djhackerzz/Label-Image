@@ -177,7 +177,7 @@ export function ExportModal({
                         <span
                           className="min-w-[1.6rem] shrink-0 text-right"
                           style={{
-                            color: labelStyle.numberColor,
+                            color: labelStyle.textColor,
                             fontSize: `${labelStyle.numberFontSize}px`,
                             fontWeight: 700,
                             fontStyle: 'normal',
@@ -244,7 +244,7 @@ export function ExportModal({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px 40px' }}>
               {pins.map((pin) => (
                 <div key={pin.id} style={{ display: 'flex', gap: '8px', alignItems: 'baseline' }}>
-                  <span style={{ fontWeight: 700, fontSize: `${labelStyle.numberFontSize}px`, color: labelStyle.numberColor, minWidth: '1.6rem', textAlign: 'right', flexShrink: 0 }}>
+                  <span style={{ fontWeight: 700, fontSize: `${labelStyle.numberFontSize}px`, color: labelStyle.textColor, minWidth: '1.6rem', textAlign: 'right', flexShrink: 0 }}>
                     {pin.number}.
                   </span>
                   <span style={{ fontSize: `${labelStyle.fontSize}px`, color: labelStyle.textColor, fontWeight: labelStyle.bold ? 700 : 400, fontStyle: labelStyle.italic ? 'italic' : 'normal' }}>
