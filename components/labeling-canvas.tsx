@@ -41,7 +41,7 @@ function DraggableBadge({
   const hasMoved = useRef(false)
   const [isDragging, setIsDragging] = useState(false)
 
-  const handlePointerDown = (e: React.PointerEvent) => {
+    const handlePointerDown = (e: React.PointerEvent) => {
     e.stopPropagation()
     e.preventDefault()
     hasMoved.current = false
@@ -69,16 +69,28 @@ function DraggableBadge({
       onMove(pin.id, x, y * scale)
     }
 
-    const handlePointerUp = () => {
+    const cleanup = () => {
       setIsDragging(false)
-      if (!hasMoved.current) onSelect()
       hasMoved.current = false
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointercancel', handlePointerCancel)
+    }
+
+    const handlePointerUp = () => {
+      cleanup()
+      if (!hasMoved.current) onSelect()
+    }
+
+    // Browser may cancel the pointer (e.g. if it hijacks the gesture) —
+    // make sure we always clean up so dragging never gets stuck.
+    const handlePointerCancel = () => {
+      cleanup()
     }
 
     window.addEventListener('pointermove', handlePointerMove)
     window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointercancel', handlePointerCancel)
   }
 
   return (
@@ -94,7 +106,13 @@ function DraggableBadge({
       }}
       className={cn(
         'group absolute z-20 flex items-center justify-center w-7 h-7 rounded-full',
-        'select-none transition-all',
+        'select-none touch-none',
+        // Animate only transform/shadow — NOT left/top — so the badge never
+        // lags behind the finger while dragging.
+        'transition-[transform,box-shadow]',
+        // Expand the touch hit area on tablets/phones (coarse pointers)
+        // so the small badge is easier to grab.
+        'after:content-[""] after:absolute after:rounded-full after:inset-0 pointer-coarse:after:-inset-3',
         'bg-white',
         !readOnly && 'cursor-grab active:cursor-grabbing',
         isDragging && 'scale-110',
@@ -215,7 +233,7 @@ export function LabelingCanvas({
     <div
       ref={containerRef}
       className={cn(
-        'relative inline-block select-none m-auto',
+        'relative inline-block select-none m-auto touch-manipulation',
         !readOnly && mode === 'add' && 'cursor-crosshair',
         !readOnly && mode === 'view' && 'cursor-default',
       )}
