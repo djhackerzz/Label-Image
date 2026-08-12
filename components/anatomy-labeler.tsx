@@ -7,6 +7,7 @@ import { LabelingCanvas } from './labeling-canvas'
 import { LabelsPanel } from './labels-panel'
 import { ExportModal } from './export-modal'
 import { LabelStyleSettings } from './label-style-settings'
+import { MarginSetupModal } from './margin-setup'
 
 export type Pin = {
   id: string
@@ -34,7 +35,7 @@ export const DEFAULT_LABEL_STYLE: LabelStyle = {
   fontSize: 11,
   bold: true,
   italic: false,
-  numberColor: '#ffffff',
+  numberColor: '#000000',
   numberFontSize: 13,
   arrowColor: '#ffffff',
   arrowThickness: 1,
@@ -172,6 +173,7 @@ export function AnatomyLabeler() {
   const [organName, setOrganName] = useState('')
   const [labelStyle, setLabelStyle] = useState<LabelStyle>(DEFAULT_LABEL_STYLE)
   const [bottomSpaceRatio, setBottomSpaceRatio] = useState(0)
+  const [showMarginSetup, setShowMarginSetup] = useState(false)
 
   const loadImage = useCallback((src: string, alt: string, name: string) => {
     setImageSrc(src)
@@ -180,6 +182,8 @@ export function AnatomyLabeler() {
     setPins([])
     setSelectedPinId(null)
     setMode('add')
+    setBottomSpaceRatio(0)
+    setShowMarginSetup(true)
   }, [])
 
   const handleFileUpload = useCallback(
@@ -424,6 +428,19 @@ export function AnatomyLabeler() {
           onClose={() => setShowSettings(false)}
           bottomSpaceRatio={bottomSpaceRatio}
           onBottomSpaceRatioChange={setBottomSpaceRatio}
+        />
+      )}
+
+      {showMarginSetup && imageSrc && (
+        <MarginSetupModal
+          imageSrc={imageSrc}
+          imageAlt={imageAlt}
+          labelStyle={labelStyle}
+          initialRatio={bottomSpaceRatio}
+          onConfirm={(ratio) => {
+            setBottomSpaceRatio(ratio)
+            setShowMarginSetup(false)
+          }}
         />
       )}
 
