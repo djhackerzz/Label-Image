@@ -41,8 +41,7 @@ export const DEFAULT_LABEL_STYLE: LabelStyle = {
   arrowThickness: 1,
 }
 
-const DEMO_IMAGE =
-  'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG-20260807-WA0000-kghbLoXdqOyxRBCqFA2YdBbnbnjysK.jpg'
+const DEMO_IMAGE = '/demo/heart-demo.jpg'
 
 // ── Upload drop zone ──────────────────────────────────────────────────────────
 function UploadDropzone({

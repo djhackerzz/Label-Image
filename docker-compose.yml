@@ -1,0 +1,8 @@
+services:
+  anatomylabel:
+    build: .
+    image: anatomylabel-demo
+    container_name: anatomylabel-demo
+    ports:
+      - "8080:80"
+    restart: unless-stopped
